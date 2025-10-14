@@ -81,3 +81,74 @@ Visualization: The main.py script generates and saves a ROC Curve plot to visual
 Baseline Comparison: The project also reports the performance of One-Class SVM and Isolation Forest as baseline methods for anomaly detection, allowing for a fair comparison and demonstrating the effectiveness of the deep learning approach.
 
 By following this approach, our project provides a robust, scalable, and effective solution for detecting anomalies in encrypted network traffic, which is a significant challenge in modern cybersecurity.
+
+## Project flow & how to run
+
+This section describes the minimal steps to run the project locally, where to put the dataset, and what outputs the pipeline generates.
+
+1. Place your dataset
+
+- Put the pre-split CSV files under `Dataset/raw/Training and Testing Sets/`.
+	- Training: `UNSW_NB15_training-set.csv`
+	- Testing: `UNSW_NB15_testing-set.csv`
+
+2. Create and activate a Python virtual environment (Windows cmd)
+
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+3. Install dependencies
+
+If the repo contains `requirements.txt` (recommended):
+
+```cmd
+pip install -r requirements.txt
+```
+
+If not, install the main packages used by the project:
+
+```cmd
+pip install tensorflow scikit-learn pandas matplotlib xgboost mlflow
+```
+
+4. (Optional) Choose a scaler
+
+Set the `SCALER_TYPE` environment variable to change preprocessing behavior:
+
+```cmd
+set SCALER_TYPE=robust   # or minmax
+```
+
+5. Run the pipeline
+
+```cmd
+python src\main.py
+```
+
+6. Outputs (generated)
+
+- `model/autoencoder_model.keras` — trained Keras model
+- `model/scaler.pkl` — saved scaler object
+- `Dataset/processed/processed_data_train.csv` and `_test.csv` — processed versions of train/test
+- `Dataset/results/anomaly_scores.csv` — anomaly scores + predicted labels
+- `report/figures/performance_metrics.png` — ROC curve
+
+7. Git / dataset note
+
+The dataset is large and should not be checked into source control. `.gitignore` already includes the `Dataset/` directory and `model/` artifacts to prevent accidental commits. If you have already committed large files, run:
+
+```cmd
+git rm -r --cached Dataset
+git rm -r --cached model
+git commit -m "Remove large dataset and model artifacts; add to .gitignore"
+git push
+```
+
+8. Troubleshooting
+
+- If Python is not found, use the Python launcher `py -3 -m venv venv` or install Python from https://python.org and check "Add to PATH" during installation.
+- If `pip install` fails for some packages, install them one-by-one or consult the package docs for platform-specific builds (e.g., `xgboost`/`tensorflow`).
+
+If you want, I can also add a small `scripts/` helper (e.g., `scripts/run.sh` / `scripts/run.bat`) to automate these commands.
