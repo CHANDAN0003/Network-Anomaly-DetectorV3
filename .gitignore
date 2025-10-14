@@ -201,6 +201,22 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+ Project-specific ignores
+# Dataset (large data) - keep local only
+Dataset/
+
+# Model artifacts
+model/
+
+# Logs, results, and figures (generated)
+Dataset/results/
+report/figures/
+
+# Ignore any zip/tar files containing datasets
+*.zip
+*.tar.gz
+*.tgz
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
