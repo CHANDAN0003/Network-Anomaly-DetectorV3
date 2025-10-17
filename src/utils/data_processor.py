@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import os
 import pickle  # Using pickle instead of joblib
+# scapy functions are imported only when needed to avoid side-effects during module import
 
 
 def load_and_preprocess_data(file_path):
@@ -96,6 +97,9 @@ def save_processed_data(X_processed, output_path):
     print(f"💾 Encoded data saved to {output_path}")
 
 
+
+
+
 if __name__ == "__main__":
     # Example usage
     X_train, X_test, y_train, y_test, scaler = load_and_preprocess_data(
@@ -103,3 +107,23 @@ if __name__ == "__main__":
     )
     save_processed_data(X_train, "Dataset/processed/processed_data_train.csv")
     save_processed_data(X_test, "Dataset/processed/processed_data_test.csv")
+
+    # If run directly, optionally list network interfaces and do a short sniff for debugging.
+    try:
+        from scapy.all import get_if_list, sniff, conf
+        import os
+
+        NPCAP_IFACE = os.environ.get("NPCAP_IFACE", None)
+        if NPCAP_IFACE is None:
+            print("Available interfaces:", get_if_list())
+            NPCAP_IFACE = conf.iface
+        else:
+            print("Using NPCAP_IFACE:", NPCAP_IFACE)
+
+        # Quick sniff (count=5) for debug if environment variable RUN_SNIFF is set
+        if os.environ.get("RUN_SNIFF", "0") == "1":
+            print("Starting quick sniff for 5 packets on:", NPCAP_IFACE)
+            sniff(count=5, prn=lambda p: print(p.summary()), iface=NPCAP_IFACE)
+    except Exception:
+        # If scapy or permissions not available, silently skip interactive sniffing
+        pass

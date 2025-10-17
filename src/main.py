@@ -4,6 +4,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_sco
 import matplotlib.pyplot as plt
 import os
 import pickle  # Use pickle instead of joblib
+import json
 
 from utils.data_processor import load_and_preprocess_data, get_normal_training_data
 from models.anomaly_detector import build_autoencoder, train_model, save_model
@@ -48,15 +49,31 @@ def main():
     calibration_set = X_train_normal[:calibration_size]
     calibration_pred = autoencoder.predict(calibration_set)
     calibration_mse = np.mean(np.power(calibration_set - calibration_pred, 2), axis=1)
-    # Find threshold that maximizes F1 or achieves target FPR
-    best_f1, best_thresh = 0, None
-    for t in np.percentile(calibration_mse, np.linspace(90, 99, 20)):
-        y_cal_pred = (calibration_mse > t).astype(int)
-        f1 = f1_score(np.zeros_like(y_cal_pred), y_cal_pred)
-        if f1 > best_f1:
-            best_f1, best_thresh = f1, t
-    threshold = best_thresh if best_thresh is not None else np.percentile(mse, 95)
-    print(f"Optimal threshold (calibration): {threshold:.4f} (F1={best_f1:.4f})")
+
+    # Default method: percentile-based threshold on calibration MSE (robust)
+    default_percentile = 95
+    threshold = float(np.percentile(calibration_mse, default_percentile))
+    method = "calibration_percentile"
+    percentile_used = int(default_percentile)
+    print(f"Threshold set to {percentile_used}th percentile of calibration MSE: {threshold:.6g}")
+
+    # Optional: if a labeled validation set is available, search for threshold that maximizes F1
+    # (This branch is kept for research but will not be used by default unless you enable it)
+    # Example toggle: set env var USE_F1_CALIBRATION=1 to attempt F1-based search
+    if os.environ.get("USE_F1_CALIBRATION", "0") == "1":
+        print("Attempting F1-based threshold search on calibration set (USE_F1_CALIBRATION=1)")
+        best_f1, best_thresh = 0.0, None
+        # search percentiles between 90 and 99
+        for t in np.percentile(calibration_mse, np.linspace(90, 99, 20)):
+            y_cal_pred = (calibration_mse > t).astype(int)
+            f1 = f1_score(np.zeros_like(y_cal_pred), y_cal_pred)
+            if f1 > best_f1:
+                best_f1, best_thresh = f1, t
+        if best_thresh is not None:
+            threshold = float(best_thresh)
+            method = "f1_calibration"
+            percentile_used = None
+            print(f"F1-based threshold chosen: {threshold:.6g} (F1={best_f1:.4f})")
 
     # --- Step 5: Evaluation ---
     print("\n--- Evaluating performance ---")
@@ -77,6 +94,28 @@ def main():
     })
     results_df.to_csv(RESULTS_PATH, index=False)
     print(f"✅ Results saved to {RESULTS_PATH}")
+
+    # --- Step 7: Persist threshold (with metadata) ---
+    try:
+        os.makedirs(os.path.dirname("model/threshold.json"), exist_ok=True)
+        threshold_metadata = {
+            "threshold": float(threshold),
+            "method": method,
+            "percentile": percentile_used,
+            "calibration_size": int(calibration_size),
+            "calibration_mse": {
+                "mean": float(np.mean(calibration_mse)),
+                "std": float(np.std(calibration_mse)),
+                "min": float(np.min(calibration_mse)),
+                "max": float(np.max(calibration_mse)),
+            },
+            "timestamp": pd.Timestamp.now().isoformat()
+        }
+        with open("model/threshold.json", "w") as tf:
+            json.dump(threshold_metadata, tf, indent=2)
+        print("✅ Threshold metadata saved to model/threshold.json")
+    except Exception as e:
+        print(f"⚠️ Failed to save threshold metadata: {e}")
 
     # Optional: Plot ROC Curve
     fpr, tpr, _ = roc_curve(y_test, mse)

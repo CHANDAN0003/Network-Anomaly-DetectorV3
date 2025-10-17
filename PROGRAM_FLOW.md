@@ -28,7 +28,8 @@ The pipeline processes raw flow CSVs into numeric "pseudo-DNA" vectors, trains a
 
 4. Threshold tuning (calibration)
    - A calibration set is taken from normal training samples: first N normal samples (N = min(1000, available)).
-   - Compute reconstruction MSE for calibration set and search thresholds over percentiles (90–99) to choose the threshold that maximizes an F1-style objective computed against calibration's true label (all zeros). If no best threshold is found, a fallback (95th percentile of test MSE) is used.
+   - Default behavior (safer): set the threshold to a calibration percentile (95th percentile by default) of the calibration MSE distribution. This is robust when the calibration set contains only normal examples.
+   - Optional F1-based search: for research/experimentation you can enable a search that scans percentiles (90–99) and selects the threshold that maximizes an F1-style objective by setting the environment variable `USE_F1_CALIBRATION=1`. This is not the default because calibration sets without positives produce degenerate F1 values.
    - Final `threshold` is used to convert continuous anomaly scores into binary predictions: `predicted_label = (mse > threshold).astype(int)`.
 
 5. Evaluation and reporting
@@ -68,7 +69,9 @@ The pipeline processes raw flow CSVs into numeric "pseudo-DNA" vectors, trains a
 
 ## Recommended improvements (next steps)
 1. Make file paths configurable (CLI flags or environment variables). Example: add argparse to `src/main.py` and `src/live_detector.py`.
-2. Persist the chosen `threshold` after calibration to `model/threshold.json` and have `live_detector.py` read it. (Implemented: `src/main.py` writes `model/threshold.json`; `src/live_detector.py` reads it on startup and falls back to a default threshold if the file is missing or invalid.)
+2. Persist the chosen `threshold` after calibration to `model/threshold.json` and have `live_detector.py` read it. (Implemented.)
+   - New behavior: `src/main.py` writes rich metadata to `model/threshold.json` with fields: `threshold`, `method` (e.g., `calibration_percentile` or `f1_calibration`), `percentile` (if used), `calibration_size`, `calibration_mse` statistics (mean/std/min/max), and `timestamp`.
+   - `src/live_detector.py` reads `model/threshold.json` and uses the persisted `threshold` by default; it falls back to a configured default only if the file is missing or malformed.
 3. Use a consistent serialization method for scaler (prefer `joblib.dump/load`) and update `main.py` to use joblib instead of pickle for clarity.
 4. Add a small `scripts/run.bat` to create venv, install dependencies, and run training + evaluation.
 5. Add unit tests for `utils.data_processor` and for evaluation metrics.
