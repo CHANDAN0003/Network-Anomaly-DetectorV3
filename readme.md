@@ -42,7 +42,7 @@ pip install tensorflow scikit-learn pandas matplotlib scapy joblib mlflow
 4. (Optional) Pick a scaler
 
 ```cmd
-set SCALER_TYPE=robust   # use 'robust' or 'minmax' if desired
+set SCALER_TYPE=minmax  # use 'robust' or 'minmax' if desired
 ```
 
 5. Run the training and evaluation pipeline
