@@ -29,7 +29,7 @@ def build_lstm_autoencoder(seq_len, n_features):
     model.compile(optimizer='adam', loss='mse')
     return model
 
-def train_model(model, X_train_normal, X_test, epochs=50, batch_size=32):
+def train_model(model, X_train_normal, X_test, epochs=100, batch_size=32):
     """Trains the autoencoder model on normal traffic only."""
     print("\n--- Training Sparse Autoencoder ---")
     history = model.fit(
