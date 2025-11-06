@@ -9,7 +9,7 @@ The pipeline processes raw flow CSVs into numeric "pseudo-DNA" vectors, trains a
 
 1. Preprocessing
    - Entry point: `src/main.py` calls `utils.data_processor.load_and_preprocess_data(RAW_DATA_PATH)`
-   - Input: CSV path (set via `RAW_DATA_PATH` in `main.py`). Example: `D:\Network-Anomaly-DetectorV2\Dataset\raw\Training and Testing Sets\UNSW_NB15_training-set.csv`.
+   - Input: CSV path (set via `RAW_DATA_PATH` in `main.py`). Example: `D:\Network-Anomaly-DetectorV3\Dataset\raw\Training and Testing Sets\UNSW_NB15_training-set.csv`.
    - Output: (X_train, X_test, y_train, y_test, scaler)
      - `X_train` / `X_test`: numpy arrays (or pandas-convertible arrays) of preprocessed features (scaled, encoded).
      - `y_train` / `y_test`: ground-truth labels used only for evaluation.

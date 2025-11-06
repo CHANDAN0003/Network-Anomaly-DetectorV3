@@ -9,3 +9,5 @@ streamlit
 tqdm
 tensorflow
 scapy
+scikeras
+joblib
